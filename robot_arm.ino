@@ -1,5 +1,3 @@
- //this script is mine, it's awesome (well it works anyway)
-
 #include <EEPROM.h>
 //inlcuce adafruit servo driver thingies
 #include <Wire.h>
@@ -8,7 +6,6 @@ Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver();
 
 int angles0,angles1,angles2,angles3;
 int a = 0; //used to make sure everthing inside the if statement only gets executed once
-int b = 0; //same as a
 uint8_t potPin0 = 0;
 uint8_t potPin1 = 1;
 uint8_t potPin2 = 2;
@@ -23,7 +20,7 @@ uint8_t buttonpin = 5;
 uint8_t transistorpin = 7;
 uint8_t recordbutton =8;
 
-//pulse length values for 0,90,180 degrees for the 6 servos: (if only these retards were linear...)
+//pulse length values for 0,90,180 degrees for the 6 servos: 
 int servo[6][3]={  
   {130,320,570},
   {130,320,540},
@@ -33,13 +30,13 @@ int servo[6][3]={
   {0,0,0}
 };
 
-//pot meter calibration, fuckers aren't linear
+//pot meter calibration
 int pots[3][3]={
   {0,270,640},
   {0,270,640},
   {0,270,640},
 };
-//pot meter 1 has a dead zone arround 0, replace the fucker (maybe)
+
 
 void setup() {
   pinMode(buttonpin, INPUT);
@@ -64,40 +61,30 @@ void loop()
   
   while (! digitalRead(switchpin) ) //1 && b == 0
   {
-     
     digitalWrite(ledpin2, LOW);
-  
     digitalWrite(ledpin1, LOW);
     mimic();
-    if (! digitalRead(recordbutton) && b==0)
+    if (! digitalRead(recordbutton) && a==0)
     {
     digitalWrite(ledpin1, HIGH);
-    b = 1; //makes sure everything only gets excecuted once   
+    a = 1; //makes sure everything only gets excecuted once   
     record();
-    }
-    
+    }   
   }
-
-
-  
-  while (digitalRead(switchpin) ) //2 && a == 0
+  while (digitalRead(switchpin) ) 
   {
-    b = 0;
+    a = 0;
     digitalWrite(ledpin1, LOW);
     digitalWrite(ledpin2, HIGH);
-    
-    
     addr = 0;
     play();
     delay(100);
   }
-
 }
 
 //repeat the input with the servos from the pots, returns angles and button status for the record function
 void mimic( )
 {
-  
   float reading0 = analogRead(potPin0);
   float reading1 = analogRead(potPin1);
   float reading2 = analogRead(potPin2);
@@ -117,48 +104,24 @@ void mimic( )
   {
     digitalWrite(transistorpin, LOW);
   }
-  
 }
 
-//plays the 1024 address values from record
-void play() 
-{
-  uint16_t addr = 0;
-  
-  while(addr < limit)
-  {
-
-    angles[0] = EEPROM.read(addr);
-    angles[1] = EEPROM.read(addr+1);
-    angles[2] = EEPROM.read(addr+2);
-    angles[3] = (90 - angles[1] + angles[2]);
-    digitalWrite(transistorpin, EEPROM.read(addr+3));
-    servoangle(0,0,180-angles[0]);
-    servoangle(1,1,angles[1]); 
-    servoangle(2,2,angles[2]);
-    servoangle(3,3,angles[3]);
-    delay(25);  
-    addr = addr  + 4;
-  }
-
-}
 //stores the movement of the pots in 1024 adresses while the servos mimic them 
 void record() 
 {
   uint16_t addr = 0;
   limit = 0;
-  
   while(addr <= 1028 && !digitalRead(switchpin))
   {
     float reading0 = analogRead(potPin0);
     float reading1 = analogRead(potPin1);
     float reading2 = analogRead(potPin2);
     angles[0] = potangle(0,reading0);
-    angles[1] = potangle(1,reading1);
+    angles[1] = potangle(1,1023 - reading1);
     angles[2] = potangle(2,reading2);
     angles[3] = (90 - angles[1] + angles[2]);
     angles[4] = 1 - digitalRead(buttonpin);
-    servoangle(0,0,180-angles[0]);
+    servoangle(0,0,180 - angles[0]);
     servoangle(1,1,angles[1]); 
     servoangle(2,2,angles[2]);
     servoangle(3,3,angles[3]);
@@ -180,9 +143,26 @@ void record()
   }
 }
 
+//plays the 1024 address values from record
+void play() 
+{
+  uint16_t addr = 0;
+  while(addr < limit)
+  {
 
-
-
+    angles[0] = EEPROM.read(addr);
+    angles[1] = EEPROM.read(addr+1);
+    angles[2] = EEPROM.read(addr+2);
+    angles[3] = (90 - angles[1] + angles[2]);
+    digitalWrite(transistorpin, EEPROM.read(addr+3));
+    servoangle(0,0,180 - angles[0]);
+    servoangle(1,1,angles[1]); 
+    servoangle(2,2,angles[2]);
+    servoangle(3,3,angles[3]);
+    delay(25);  
+    addr = addr  + 4;
+  }
+}
   
 //correctly map pot reading to angle for given calibrated pot meter
 int potangle(int pot_number, int reading){
@@ -191,14 +171,12 @@ int potangle(int pot_number, int reading){
   {
     mappedreading = map(reading,pots[pot_number][0],pots[pot_number][1],0,90);
     return mappedreading;
-
   }
   else if(reading>pots[pot_number][1])
   {
     mappedreading = map(reading,pots[pot_number][1],pots[pot_number][2],90,180);
     return mappedreading;
   }
-
 }
   
 //set a specific servo (with angle values from the servo matrix) on a specific channel to a specific angle
