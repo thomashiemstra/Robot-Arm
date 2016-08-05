@@ -25,19 +25,19 @@ uint8_t recordbutton =8;
 
 //pulse length values for 0,90,180 degrees for the 6 servos: (if only these retards were linear...)
 int servo[6][3]={  
-  {165,370,620},
-  {130,340,600},
-  {140,340,600},
-  {150,400,645},
+  {130,320,570},
+  {130,320,540},
+  {140,350,560},
+  {120,445,580},
   {0,0,0},
   {0,0,0}
 };
 
 //pot meter calibration, fuckers aren't linear
 int pots[3][3]={
-  {0,290,625},
-  {0,290,605},
-  {0,290,625},
+  {0,270,640},
+  {0,270,640},
+  {0,270,640},
 };
 //pot meter 1 has a dead zone arround 0, replace the fucker (maybe)
 
@@ -69,7 +69,7 @@ void loop()
   
     digitalWrite(ledpin1, LOW);
     mimic();
-    if (! digitalRead(recordbutton) && a==0)
+    if (! digitalRead(recordbutton) && b==0)
     {
     digitalWrite(ledpin1, HIGH);
     b = 1; //makes sure everything only gets excecuted once   
@@ -102,10 +102,10 @@ void mimic( )
   float reading1 = analogRead(potPin1);
   float reading2 = analogRead(potPin2);
   angles0 = potangle(0,reading0);
-  angles1 = potangle(1,reading1);
+  angles1 = potangle(1,1023 - reading1);
   angles2 = potangle(2,reading2);
   angles3 = (90 - angles1 + angles2);
-  servoangle(0,0,180-angles0);
+  servoangle(0,0,180 - angles0);
   servoangle(1,1,angles1); 
   servoangle(2,2,angles2);
   servoangle(3,3,angles3);
